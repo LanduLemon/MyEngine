@@ -20,3 +20,14 @@ target_link_libraries(myengine PRIVATE "C:/VulkanSDK/1.3.283.0/Lib/vulkan-1.lib"
                                        )
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
+
+add_custom_command(TARGET myengine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/shaders"
+        "$<TARGET_FILE_DIR:myengine>/shaders")
+
+add_custom_target(run_compile_bat
+    COMMAND "${CMAKE_SOURCE_DIR}/compile.bat"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    COMMENT "excute compile.bat")
+add_dependencies(myengine run_compile_bat)

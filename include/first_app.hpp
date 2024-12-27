@@ -2,7 +2,6 @@
 
 #include "lve_device.hpp"
 #include "lve_game_object.hpp"
-#include "lve_pipeline.hpp"
 #include "lve_window.hpp"
 #include "lve_renderer.hpp"
 
@@ -26,16 +25,11 @@ class FirstApp {
 
  private:
   void loadGameObjects();
-  void createPipelineLayout();
-  void createPipeline();
-  void renderGameObjects(VkCommandBuffer commandBuffer);
 
   LveWindow lveWindow{WIDTH, HEIGHT, "Vulkan Tutorial"};
   LveDevice lveDevice{lveWindow};
   LveRenderer lveRenderer{lveWindow, lveDevice};
   
-  std::unique_ptr<LvePipeline> lvePipeline;
-  VkPipelineLayout pipelineLayout;
   std::vector<LveGameObject> gameObjects;
 };
 }  // namespace lve
