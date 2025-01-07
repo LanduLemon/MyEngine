@@ -20,9 +20,15 @@ class LveRenderer {
 
   VkRenderPass getSwapChainRenderPass() const { return lveSwapChain->getRenderPass(); }
   bool isFrameInProgress() const { return isFrameStarted; }
-  VkCommandBuffer getCurrentCommandBuffer() const { 
-    assert(isFrameStarted && "Cannot get command buffer while frame is in progress");
-    return commandBuffers[currentImageIndex];
+
+  VkCommandBuffer getCurrentCommandBuffer() const {
+    assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
+    return commandBuffers[currentFrameIndex];
+  }
+
+  int getFrameIndex() const {
+    assert(isFrameStarted && "Cannot get frame index when frame not in progress");
+    return currentFrameIndex;
   }
 
   VkCommandBuffer beginFrame();
@@ -40,7 +46,8 @@ class LveRenderer {
   std::unique_ptr<LveSwapChain> lveSwapChain;
   std::vector<VkCommandBuffer> commandBuffers;
 
-  uint32_t currentImageIndex{0};
-  bool isFrameStarted{false};
+  uint32_t currentImageIndex;
+  int currentFrameIndex;
+  bool isFrameStarted;
 };
 }  // namespace lve
