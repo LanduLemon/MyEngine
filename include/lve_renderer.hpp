@@ -46,8 +46,8 @@ class LveRenderer {
   std::unique_ptr<LveSwapChain> lveSwapChain;
   std::vector<VkCommandBuffer> commandBuffers;
 
-  uint32_t currentImageIndex;
-  int currentFrameIndex;
-  bool isFrameStarted;
+  uint32_t currentImageIndex{0};
+  int currentFrameIndex{0};
+  bool isFrameStarted{false};
 };
 }  // namespace lve
