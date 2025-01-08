@@ -34,7 +34,7 @@ class GravityPhysicsSystem {
   // more stable simulation, but takes longer to compute
   void update(std::vector<LveGameObject>& objs, float dt, unsigned int substeps = 1) {
     const float stepDelta = dt / substeps;
-    for (int i = 0; i < substeps; i++) {
+    for (unsigned int i = 0; i < substeps; i++) {
       stepSimulation(objs, stepDelta);
     }
   }
@@ -115,14 +115,14 @@ std::unique_ptr<LveModel> createSquareModel(LveDevice& device, glm::vec2 offset)
 
 std::unique_ptr<LveModel> createCircleModel(LveDevice& device, unsigned int numSides) {
   std::vector<LveModel::Vertex> uniqueVertices{};
-  for (int i = 0; i < numSides; i++) {
+  for (unsigned int i = 0; i < numSides; i++) {
     float angle = i * glm::two_pi<float>() / numSides;
     uniqueVertices.push_back({{glm::cos(angle), glm::sin(angle)}});
   }
   uniqueVertices.push_back({});  // adds center vertex at 0, 0
 
   std::vector<LveModel::Vertex> vertices{};
-  for (int i = 0; i < numSides; i++) {
+  for (unsigned int i = 0; i < numSides; i++) {
     vertices.push_back(uniqueVertices[i]);
     vertices.push_back(uniqueVertices[(i + 1) % numSides]);
     vertices.push_back(uniqueVertices[numSides]);
