@@ -13,6 +13,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "rainbow_system.hpp"
+
 namespace lve {
 
 // Note: also would need to add RigidBody2dComponent to game object
@@ -172,6 +174,8 @@ void FirstApp::run() {
     }
   }
 
+  RainbowSystem rainbowSystem{1.f};
+
   GravityPhysicsSystem gravitySystem{0.81f};
   Vec2FieldSystem vecFieldSystem{};
 
@@ -184,6 +188,7 @@ void FirstApp::run() {
       // update systems
       gravitySystem.update(physicsObjects, 1.f / 60, 5);
       vecFieldSystem.update(gravitySystem, physicsObjects, vectorField);
+      rainbowSystem.update(1.f / 60, vectorField);
 
       // render system
       lveRenderer.beginSwapChainRenderPass(commandBuffer);
