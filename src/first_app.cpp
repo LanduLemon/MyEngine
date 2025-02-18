@@ -3,6 +3,7 @@
 #include "keyboard_movement.hpp"
 #include "simple_render_system.hpp"
 #include "lve_camera.hpp"
+#include "lve_buffer.hpp"
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -15,7 +16,15 @@
 #include <cassert>
 #include <stdexcept>
 
+#define LIGHT_DIRECTION glm::vec3(1.0, -3.0, -1.0);
+
 namespace lve {
+
+  struct GlobalUbo {
+    glm::mat4 projcetionView{1.f};
+    glm::vec3 lightDirection = LIGHT_DIRECTION;
+  };
+
   FirstApp::FirstApp() {
     loadGameObjects();
   }
@@ -23,10 +32,22 @@ namespace lve {
   FirstApp::~FirstApp() {}
 
   void FirstApp::run() {
-    SimpleRenderSystem simpleRenderSystem{lveDevice, lveRenderer.getSwapChainRenderPass()};
+    std::vector<std::unique_ptr<LveBuffer>> uboBuffers(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < uboBuffers.size(); i++) {
+      uboBuffers[i] = std::make_unique<LveBuffer>(
+        lveDevice,
+        sizeof(GlobalUbo),
+        1,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        lveDevice.properties.limits.minUniformBufferOffsetAlignment);
+        uboBuffers[i]->map();
+    }
+
+    SimpleRenderSystem simpleRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass() };
     LveCamera camera{};
     //camera.setViewDirection(glm::vec3(0.0f),glm::vec3(0.5f,0,1.0f));
-    camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0,0,2.5f));
+    camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0, 0, 2.5f));
 
     auto viewObject = LveGameObject::CreateGameObject();
     KeyboardMovementController cameraController{};
@@ -36,7 +57,7 @@ namespace lve {
     while (!lveWindow.shouldClose()) {
       glfwPollEvents();
 
-      if(glfwGetKey(lveWindow.getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS){
+      if (glfwGetKey(lveWindow.getGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(lveWindow.getGLFWwindow(), true);
       }
 
@@ -48,13 +69,26 @@ namespace lve {
 
       cameraController.moveInPlaneXZ(lveWindow.getGLFWwindow(), frameTime, viewObject);
       camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
-      
+
       float aspect = lveRenderer.getAspectRatio();
       //camera.setOrthographicProjection(-aspect,aspect,-1,1,-1,1);
       camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.f);
-      if(auto commandBuffer = lveRenderer.beginFrame()){
+      if (auto commandBuffer = lveRenderer.beginFrame()) {
+        int frameIndex = lveRenderer.getFrameIndex();
+        FrameInfo frameInfo{
+          frameIndex,
+          frameTime,
+          commandBuffer,
+          camera
+        };
+        //update
+        GlobalUbo ubo{};
+        ubo.projcetionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+        uboBuffers[frameIndex]->writeToBuffer(&ubo, sizeof(ubo), frameIndex);
+        //uboBuffers[frameIndex]->flush(frameIndex);
+        //render
         lveRenderer.beginSwapChainRenderPass(commandBuffer);
-        simpleRenderSystem.renderGameObjects(commandBuffer,gameObjects,camera);
+        simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
         lveRenderer.endSwapChainRenderPass(commandBuffer);
         lveRenderer.endFrame();
       }
