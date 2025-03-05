@@ -1,9 +1,10 @@
 #include "first_app.hpp"
 
 #include "keyboard_movement.hpp"
-#include "simple_render_system.hpp"
 #include "lve_camera.hpp"
 #include "lve_buffer.hpp"
+#include "systems/simple_render_system.hpp"
+#include "systems/point_light_system.hpp"
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -68,6 +69,7 @@ namespace lve {
 
 
     SimpleRenderSystem simpleRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+    PointLightSystem pointLightSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     LveCamera camera{};
 
     auto viewObject = LveGameObject::CreateGameObject();
@@ -114,6 +116,7 @@ namespace lve {
         //render
         lveRenderer.beginSwapChainRenderPass(commandBuffer);
         simpleRenderSystem.renderGameObjects(frameInfo);
+        pointLightSystem.render(frameInfo);
         lveRenderer.endSwapChainRenderPass(commandBuffer);
         lveRenderer.endFrame();
       }
