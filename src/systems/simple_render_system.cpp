@@ -18,6 +18,13 @@ struct SimplePushConstantData {
   glm::mat4 normalMatrix{1.f};
 };
 
+// struct PBRUbo {
+//     glm::vec3 lightPositions[4];   // 最多支持4个点光源
+//     glm::vec3 lightColors[4];      // 光源颜色
+//     glm::vec3 cameraPosition;              // 相机位置
+//     float numLights;               // 实际使用的光源数量
+// };
+
 SimpleRenderSystem::SimpleRenderSystem(
     LveDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
     : lveDevice{device} {

@@ -19,20 +19,32 @@ public:
     glm::vec3 color;
     glm::vec3 normal;
     glm::vec2 uv;
+    glm::vec4 tangent{};  // w分量用于确定副切线的方向（通常是1或-1) 暂时没用到
 
     static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 
     bool operator==(const Vertex &other) const {
-      return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
+      return position == other.position && color == other.color && normal == other.normal && uv == other.uv && tangent == other.tangent;
     }
   };
+  //TODO 考虑之后添加PBR材质
+  // struct PBRMaterial{
+  //   glm::vec3 albedo{1.0f};
+  //   float metallic{0.5f};
+  //   float roughness{0.5f};
+  //   float ao{1.0f};
+  // };
 
   struct Builder {
-    std::vector<Vertex> vertices{};
-    std::vector<uint32_t> indices{};
+      std::vector<Vertex> vertices{};
+      std::vector<uint32_t> indices{};
 
-    void loadModel(const std::string &filePath);
+      void loadModel(const std::string& filepath);
+  private:
+      void loadObjModel(const std::string& filepath);
+      void loadGltfModel(const std::string& filepath);
+      void computeTangents();
   };
 
   LveModel(LveDevice &device, const Builder &builder);

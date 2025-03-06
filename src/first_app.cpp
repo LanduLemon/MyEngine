@@ -146,5 +146,12 @@ namespace lve {
     quad_floor.transform.translation = {.5f, .5f, 0};
     quad_floor.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(quad_floor.GetId(), std::move(quad_floor));
+
+    lveModel = LveModel::createModelFromFile(lveDevice, "models/gltf/cube.gltf");
+    auto scene = LveGameObject::CreateGameObject();
+    scene.model = lveModel;
+    scene.transform.translation = {0.0f, -1.5f, 0.0f};
+    scene.transform.scale = {0.1f, 0.1f, 0.1f};
+    gameObjects.emplace(scene.GetId(), std::move(scene));
   }
 }  // namespace LVE
