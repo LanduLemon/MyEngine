@@ -20,6 +20,7 @@ class PointLightSystem {
   PointLightSystem(const PointLightSystem &) = delete;
   PointLightSystem &operator=(const PointLightSystem &) = delete;
 
+  void update(FrameInfo &frameInfo, GlobalUbo &ubo);
   void render(FrameInfo &frameInfo);
 
  private:
@@ -30,5 +31,6 @@ class PointLightSystem {
 
   std::unique_ptr<LvePipeline> lvePipeline;
   VkPipelineLayout pipelineLayout;
+  float accumulatedTime{0.0f};
 };
 }  // namespace lve
