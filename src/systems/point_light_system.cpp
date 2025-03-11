@@ -88,7 +88,8 @@ void PointLightSystem::update(FrameInfo & frameInfo, GlobalUbo & ubo) {
     float intensity = glm::mix(pulseMin, pulseMax, (sin(accumulatedTime * pulseSpeed) + 1.0f) * 0.5f) * baseIntensity;
     //copy light to ubo
     ubo.pointLights[lightIndex].position = glm::vec4(obj.transform.translation, 1.f);
-    ubo.pointLights[lightIndex].color = glm::vec4(obj.color, intensity);
+    //ubo.pointLights[lightIndex].color = glm::vec4(obj.color, intensity);
+    ubo.pointLights[lightIndex].color = glm::vec4(obj.color, obj.pointLight->lightIntensity);
     lightIndex++;
   }
   ubo.numLights = lightIndex;
