@@ -5,6 +5,7 @@
 #include "lve_buffer.hpp"
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
+#include "systems/skybox_system.hpp"
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -54,7 +55,7 @@ namespace lve {
       .build(globalDescriptorSets[i]);
     }
 
-
+    SkyboxRenderSystem skyboxRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     SimpleRenderSystem simpleRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     PointLightSystem pointLightSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     LveCamera camera{};
@@ -104,8 +105,11 @@ namespace lve {
         uboBuffers[frameIndex]->flush();
         //render
         lveRenderer.beginSwapChainRenderPass(commandBuffer);
+
+        skyboxRenderSystem.renderSkybox(frameInfo);
         simpleRenderSystem.renderGameObjects(frameInfo);
         pointLightSystem.render(frameInfo);
+
         lveRenderer.endSwapChainRenderPass(commandBuffer);
         lveRenderer.endFrame();
       }
@@ -121,6 +125,13 @@ namespace lve {
     flatVase.transform.translation = {-.5f, .5f, 0};
     flatVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(flatVase.GetId(), std::move(flatVase));
+
+    lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
+    auto skybox = LveGameObject::CreateGameObject();
+    skybox.model = lveModel;
+    //skybox.transform.scale = {50.f, 50.f, 50.f};  // 大立方体
+    skybox.SetTag("skybox");  // 标记为天空盒
+    gameObjects.emplace(skybox.GetId(), std::move(skybox));
 
     lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
     auto smoothVase = LveGameObject::CreateGameObject();

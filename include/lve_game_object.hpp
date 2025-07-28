@@ -8,6 +8,7 @@
 //std
 #include <memory>
 #include <unordered_map>
+#include <string>
 
 namespace lve {
 	struct PointLightComponent{
@@ -40,6 +41,8 @@ namespace lve {
 		id_t GetId() { return id; }
 		glm::vec3 color{};
 		TransformComponent transform{};
+		std::string GetTag() const { return tag; }
+		void SetTag(const std::string &newTag) { tag = newTag; }
 
 		std::shared_ptr<LveModel>model{};
 		std::unique_ptr<PointLightComponent>pointLight = nullptr;
@@ -48,5 +51,6 @@ namespace lve {
 		LveGameObject(id_t objId) :id{objId} {}
 
 		id_t id;
+		std::string tag;
 	};
 }
