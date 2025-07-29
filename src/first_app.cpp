@@ -119,19 +119,19 @@ namespace lve {
   }
 
   void FirstApp::loadGameObjects() {
-    std::shared_ptr<LveModel> lveModel = lveModel->createModelFromFile(lveDevice, "models/flat_vase.obj");
+    std::shared_ptr<LveModel>  lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
+    auto skybox = LveGameObject::CreateGameObject();
+    skybox.model = lveModel;
+    skybox.transform.scale = {50.f, 50.f, 50.f};  // 大立方体
+    skybox.SetTag("skybox");  // 标记为天空盒
+    gameObjects.emplace(skybox.GetId(), std::move(skybox));
+
+    lveModel = lveModel->createModelFromFile(lveDevice, "models/flat_vase.obj");
     auto flatVase = LveGameObject::CreateGameObject();
     flatVase.model = lveModel;
     flatVase.transform.translation = {-.5f, .5f, 0};
     flatVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(flatVase.GetId(), std::move(flatVase));
-
-    lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
-    auto skybox = LveGameObject::CreateGameObject();
-    skybox.model = lveModel;
-    //skybox.transform.scale = {50.f, 50.f, 50.f};  // 大立方体
-    skybox.SetTag("skybox");  // 标记为天空盒
-    gameObjects.emplace(skybox.GetId(), std::move(skybox));
 
     lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
     auto smoothVase = LveGameObject::CreateGameObject();

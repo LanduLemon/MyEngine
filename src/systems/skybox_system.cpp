@@ -56,7 +56,7 @@ void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass) {
   LvePipeline::defaultPipelineConfigInfo(pipelineConfig);
 
   // 天空盒特殊设置
-  pipelineConfig.rasterizationInfo.cullMode = VK_CULL_MODE_FRONT_BIT;  // 剔除前面
+  pipelineConfig.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   pipelineConfig.depthStencilInfo.depthTestEnable = VK_TRUE;
   pipelineConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;  // 不写入深度
   pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
