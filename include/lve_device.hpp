@@ -79,7 +79,14 @@ namespace lve {
         void pickPhysicalDevice();
         void createLogicalDevice();
         void createCommandPool();
-
+        void createTextureImage();
+        void createImage(uint32_t width, uint32_t height, VkFormat format,
+            VkImageTiling tiling, VkImageUsageFlags usage,
+            VkMemoryPropertyFlags properties,
+            VkImage &image, VkDeviceMemory &imageMemory);
+        void transitionImageLayout(VkImage image, VkFormat format,
+                                   VkImageLayout oldLayout,
+                                   VkImageLayout newLayout);
         // helper functions
         bool isDeviceSuitable(VkPhysicalDevice device);
         std::vector<const char*> getRequiredExtensions();
