@@ -69,6 +69,10 @@ namespace lve {
             VkMemoryPropertyFlags properties,
             VkImage& image,
             VkDeviceMemory& imageMemory);
+        void cleanImage(VkImage& image, VkDeviceMemory& imageMemory) {
+            vkDestroyImage(device_, image, nullptr);
+            vkFreeMemory(device_, imageMemory, nullptr);
+        }
 
         VkPhysicalDeviceProperties properties;
 

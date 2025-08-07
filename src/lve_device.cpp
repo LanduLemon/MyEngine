@@ -5,7 +5,9 @@
 #include <iostream>
 #include <set>
 #include <unordered_set>
-#include <third_party/stb/stb_image.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "third_party/stb/stb_image.h"
 
 namespace lve {
 
@@ -484,7 +486,7 @@ void LveDevice::transitionImageLayout(VkImage image, VkFormat format,
                                       VkImageLayout oldLayout,
                                       VkImageLayout newLayout) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-  endSingleTimeCommands(commandBuffer);
+  
 
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -500,16 +502,36 @@ void LveDevice::transitionImageLayout(VkImage image, VkFormat format,
   barrier.subresourceRange.layerCount = 1;
   barrier.srcAccessMask = 0;
   barrier.dstAccessMask = 0;
-  vkCmdPipelineBarrier(
-      commandBuffer,
-      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // srcStageMask
-      VK_PIPELINE_STAGE_TRANSFER_BIT,     // dstStageMask
-      0,                                  // dependencyFlags
-      0, nullptr,                         // memory barriers
-      0, nullptr,                         // buffer barriers
-      1, &barrier);                       // image barriers
-//   vkCmdPipelineBarrier(commandBuffer, 0, 0, 0, 0, nullptr, 0, nullptr, 1,
-//                        &barrier);
+
+  VkPipelineStageFlags sourceStage;
+  VkPipelineStageFlags destinationStage;
+  if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL ){
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  } else if(oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  }else{
+    throw std::invalid_argument("unsupported layout transition!");
+  }
+  vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0,
+                       nullptr, 0, nullptr, 1, &barrier);
+  endSingleTimeCommands(commandBuffer);
+  //   vkCmdPipelineBarrier(
+  //       commandBuffer,
+  //       0,                                  // srcStageMask
+  //       0,                                  // dstStageMask
+  //       0,                                  // dependencyFlags
+  //       0, nullptr,                         // memory barriers
+  //       0, nullptr,                         // buffer barriers
+  //       1, &barrier);                       // image barriers
+
 }
 
 void LveDevice::copyBufferToImage(
@@ -567,7 +589,7 @@ void LveDevice::createImageWithInfo(
 
 void LveDevice::createTextureImage() {
     int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load("textures/test.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc *pixels = stbi_load("textures/test.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4; // Assuming 4 channels (RGBA)
     if (!pixels) {
         throw std::runtime_error("failed to load texture image!");
@@ -600,6 +622,8 @@ void LveDevice::createTextureImage() {
     transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    vkDestroyBuffer(device_, stagingBuffer, nullptr);
+    vkFreeMemory(device_, stagingBufferMemory, nullptr);
 }
 
 void LveDevice::createImage(uint32_t width, uint32_t height, VkFormat format,

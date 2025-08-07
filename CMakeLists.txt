@@ -14,6 +14,8 @@ target_include_directories(myengine PRIVATE "C:/VulkanSDK/1.3.283.0/include"
                                             "${CMAKE_SOURCE_DIR}/include"
                                             "C:/workspace_win/glfw-3.4/include/"
                                             "${CMAKE_SOURCE_DIR}/libs/tinyobjloader"
+                                            "${CMAKE_SOURCE_DIR}/include/third_party/stb"
+                                            "${CMAKE_SOURCE_DIR}/include/third_party/cgltf"
                                             )
 
 target_link_libraries(myengine PRIVATE "C:/VulkanSDK/1.3.283.0/Lib/vulkan-1.lib"
@@ -28,7 +30,10 @@ add_custom_command(TARGET myengine POST_BUILD
         "$<TARGET_FILE_DIR:myengine>/shaders"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_SOURCE_DIR}/models"
-        "$<TARGET_FILE_DIR:myengine>/models")
+        "$<TARGET_FILE_DIR:myengine>/models"  
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/textures"
+        "$<TARGET_FILE_DIR:myengine>/textures")
 
 add_custom_target(run_compile_bat
     COMMAND "${CMAKE_SOURCE_DIR}/compile.bat"
