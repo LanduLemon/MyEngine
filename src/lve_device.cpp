@@ -6,8 +6,6 @@
 #include <set>
 #include <unordered_set>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "third_party/stb/stb_image.h"
 
 namespace lve {
 
@@ -57,7 +55,6 @@ LveDevice::LveDevice(LveWindow &window) : window{ window } {
     pickPhysicalDevice(); //选择应用程序会用的设备,物理设备
     createLogicalDevice(); //创建逻辑设备,表示想使用物理设备的哪些功能
     createCommandPool(); //命令池
-    createTextureImage(); //创建纹理图像
 }
 
 LveDevice::~LveDevice() {
@@ -587,43 +584,23 @@ void LveDevice::createImageWithInfo(
     }
 }
 
-void LveDevice::createTextureImage() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load("textures/test.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4; // Assuming 4 channels (RGBA)
-    if (!pixels) {
-        throw std::runtime_error("failed to load texture image!");
-    }
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(imageSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer, stagingBufferMemory);
-    void *data;
-    vkMapMemory(device_, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(device_, stagingBufferMemory);
-    stbi_image_free(pixels);
-    
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    createImage(
-        texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                          VK_IMAGE_LAYOUT_UNDEFINED,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, textureImage,
-                      static_cast<uint32_t>(texWidth),
-                      static_cast<uint32_t>(texHeight), 1);
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    vkDestroyBuffer(device_, stagingBuffer, nullptr);
-    vkFreeMemory(device_, stagingBufferMemory, nullptr);
+VkImageView LveDevice::createImageView(VkImage image, VkFormat format) {
+  VkImageViewCreateInfo viewInfo{};
+  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewInfo.image = image;
+  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  viewInfo.format = format;
+  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewInfo.subresourceRange.baseMipLevel = 0;
+  viewInfo.subresourceRange.levelCount = 1;
+  viewInfo.subresourceRange.baseArrayLayer = 0;
+  viewInfo.subresourceRange.layerCount = 1;
+  VkImageView imageView;
+  if (vkCreateImageView(device_, &viewInfo, nullptr, &imageView) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create texture image view!");
+  }
+  return imageView;
 }
 
 void LveDevice::createImage(uint32_t width, uint32_t height, VkFormat format,

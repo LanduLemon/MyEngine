@@ -73,6 +73,14 @@ namespace lve {
             vkDestroyImage(device_, image, nullptr);
             vkFreeMemory(device_, imageMemory, nullptr);
         }
+        VkImageView createImageView(VkImage image, VkFormat format);
+        void createImage(uint32_t width, uint32_t height, VkFormat format,
+                         VkImageTiling tiling, VkImageUsageFlags usage,
+                         VkMemoryPropertyFlags properties, VkImage& image,
+                         VkDeviceMemory& imageMemory);
+        void transitionImageLayout(VkImage image, VkFormat format,
+                                   VkImageLayout oldLayout,
+                                   VkImageLayout newLayout);
 
         VkPhysicalDeviceProperties properties;
 
@@ -84,13 +92,6 @@ namespace lve {
         void createLogicalDevice();
         void createCommandPool();
         void createTextureImage();
-        void createImage(uint32_t width, uint32_t height, VkFormat format,
-            VkImageTiling tiling, VkImageUsageFlags usage,
-            VkMemoryPropertyFlags properties,
-            VkImage &image, VkDeviceMemory &imageMemory);
-        void transitionImageLayout(VkImage image, VkFormat format,
-                                   VkImageLayout oldLayout,
-                                   VkImageLayout newLayout);
         // helper functions
         bool isDeviceSuitable(VkPhysicalDevice device);
         std::vector<const char*> getRequiredExtensions();

@@ -5,6 +5,7 @@
 #include "lve_game_object.hpp"
 #include "lve_renderer.hpp"
 #include "lve_window.hpp"
+#include "lve_texture.hpp"
 
 // std
 #include <memory>
@@ -33,5 +34,6 @@ class FirstApp {
 
   std::unique_ptr<LveDescriptorPool> globalPool{};
   LveGameObject::Map gameObjects;
+	std::shared_ptr<LveTexture> globalTexture;  // 全局采样器纹理
 };
 }  // namespace lve

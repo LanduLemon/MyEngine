@@ -26,6 +26,7 @@ namespace lve {
       .setMaxSets(2)
       .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
       .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
       .build();
     loadGameObjects();
   }
@@ -45,13 +46,16 @@ namespace lve {
     }
     auto globalSetLayout = LveDescriptorSetLayout::Builder(lveDevice)
       .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
       .build();
 
     std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
     for(int i = 0; i < globalDescriptorSets.size(); i++){
       auto bufferInfo = uboBuffers[i]->descriptorInfo();
+			auto imageInfo = globalTexture->descriptorInfo();
       LveDescriptorWriter(*globalSetLayout, *globalPool)
       .writeBuffer(0, &bufferInfo)
+			.writeImage(1, &imageInfo)
       .build(globalDescriptorSets[i]);
     }
 
@@ -119,6 +123,8 @@ namespace lve {
   }
 
   void FirstApp::loadGameObjects() {
+		globalTexture = std::make_shared<LveTexture>(lveDevice, "textures/test.png");  // 修改: 保存到成员
+
     std::shared_ptr<LveModel>  lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
     auto skybox = LveGameObject::CreateGameObject();
     skybox.model = lveModel;
