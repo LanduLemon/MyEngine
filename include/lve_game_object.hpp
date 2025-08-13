@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lve_model.hpp"
-
+#include "lve_material.hpp"
 //libs
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -46,6 +46,7 @@ namespace lve {
 
 		std::shared_ptr<LveModel>model{};
 		std::unique_ptr<PointLightComponent>pointLight = nullptr;
+		std::shared_ptr<LveMaterial> material;
 
 	private:
 		LveGameObject(id_t objId) :id{objId} {}

@@ -21,7 +21,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
   int numLights;
 } ubo;
 
-layout(set = 0, binding = 1) uniform sampler2D uTexture;
+layout(set = 1, binding = 0) uniform sampler2D texSampler;
 
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
@@ -55,7 +55,7 @@ void main() {
     specularLight += intensity * blinnTerm;
   }
 	//outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
-	vec4 texColor = texture(uTexture, fragUV);
+	vec4 texColor = texture(texSampler, fragUV);
   //vec3 base = fragColor * texColor.rgb;     // 顶点色与纹理色混合 (可按需调整)
   vec3 base = texColor.rgb;
   vec3 lighting = diffuseLight * base + specularLight * base;

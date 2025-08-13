@@ -26,9 +26,14 @@ namespace lve {
       .setMaxSets(2)
       .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
       .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
       .build();
-    loadGameObjects();
+
+		materialPool = LveDescriptorPool::Builder(lveDevice)
+		.setMaxSets(64)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+		.build();
+
+		loadGameObjects();
   }
 
   FirstApp::~FirstApp() {}
@@ -44,24 +49,53 @@ namespace lve {
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         uboBuffers[i]->map();
     }
+		//set 0
     auto globalSetLayout = LveDescriptorSetLayout::Builder(lveDevice)
       .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
       .build();
+
+		//set 1
+		auto materialSetLayout = LveDescriptorSetLayout::Builder(lveDevice)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+      .build();
+
+		for (auto& kv : gameObjects) {
+		auto& obj = kv.second;
+			if (obj.material) {
+				obj.material->buildDescriptor(*materialSetLayout, *materialPool);
+			}
+		}
+
+  // 构建一个默认材质集
+  VkDescriptorSet defaultMaterialSet{VK_NULL_HANDLE};
+	auto defaultTex = std::make_shared<LveTexture>(lveDevice, "textures/white.png");
+	auto imgInfo = defaultTex->descriptorInfo();
+	LveDescriptorWriter(*materialSetLayout, *materialPool)
+		.writeImage(0, &imgInfo)
+		.build(defaultMaterialSet);
+	defaultTexture_ = defaultTex;
 
     std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
     for(int i = 0; i < globalDescriptorSets.size(); i++){
       auto bufferInfo = uboBuffers[i]->descriptorInfo();
-			auto imageInfo = globalTexture->descriptorInfo();
       LveDescriptorWriter(*globalSetLayout, *globalPool)
       .writeBuffer(0, &bufferInfo)
-			.writeImage(1, &imageInfo)
       .build(globalDescriptorSets[i]);
     }
 
-    SkyboxRenderSystem skyboxRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-    SimpleRenderSystem simpleRenderSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-    PointLightSystem pointLightSystem{ lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+    SkyboxRenderSystem skyboxRenderSystem{
+        lveDevice, lveRenderer.getSwapChainRenderPass(),
+        globalSetLayout->getDescriptorSetLayout()};
+
+    SimpleRenderSystem simpleRenderSystem{
+        lveDevice, lveRenderer.getSwapChainRenderPass(),
+        globalSetLayout->getDescriptorSetLayout(),
+        materialSetLayout->getDescriptorSetLayout(),
+				defaultMaterialSet};
+
+    PointLightSystem pointLightSystem{
+        lveDevice, lveRenderer.getSwapChainRenderPass(),
+        globalSetLayout->getDescriptorSetLayout()};
     LveCamera camera{};
 
     auto viewObject = LveGameObject::CreateGameObject();
@@ -123,7 +157,27 @@ namespace lve {
   }
 
   void FirstApp::loadGameObjects() {
-		globalTexture = std::make_shared<LveTexture>(lveDevice, "textures/test.png");  // 修改: 保存到成员
+		auto texA = std::make_shared<LveTexture>(lveDevice, "textures/test.png");
+		auto texB = std::make_shared<LveTexture>(lveDevice, "textures/black.png");
+		auto mtlA = std::make_shared<LveMaterial>();
+		auto mtlB = std::make_shared<LveMaterial>();
+		mtlB->SetTexture(texA);
+		mtlA->SetTexture(texB);
+
+    // std::vector<LveModel::Vertex> vertices{
+    //     {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    //     {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    //     {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}} };
+    // auto lveModel = std::make_shared<LveModel>(lveDevice, vertices);
+
+    // auto triangle = LveGameObject::CreateGameObject();
+    // triangle.model = lveModel;
+    // triangle.color = { .1f, .8f, .1f };
+    // triangle.transform2d.translation.x = .2f;
+    // triangle.transform2d.scale = { 2.f, .5f };
+    // triangle.transform2d.rotation = .5f * glm::pi<float>();
+
+    //gameObjects.emplace(std::move(triangle));
 
     std::shared_ptr<LveModel>  lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
     auto skybox = LveGameObject::CreateGameObject();
@@ -135,6 +189,7 @@ namespace lve {
     lveModel = lveModel->createModelFromFile(lveDevice, "models/flat_vase.obj");
     auto flatVase = LveGameObject::CreateGameObject();
     flatVase.model = lveModel;
+		flatVase.material = mtlA;
     flatVase.transform.translation = {-.5f, .5f, 0};
     flatVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(flatVase.GetId(), std::move(flatVase));
@@ -142,6 +197,7 @@ namespace lve {
     lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
     auto smoothVase = LveGameObject::CreateGameObject();
     smoothVase.model = lveModel;
+		smoothVase.material = mtlB;
     smoothVase.transform.translation = {.5f, .5f, 0};
     smoothVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(smoothVase.GetId(), std::move(smoothVase));

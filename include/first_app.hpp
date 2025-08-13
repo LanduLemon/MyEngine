@@ -33,7 +33,9 @@ class FirstApp {
   LveRenderer lveRenderer{lveWindow, lveDevice};
 
   std::unique_ptr<LveDescriptorPool> globalPool{};
+  std::unique_ptr<LveDescriptorPool> materialPool{};
   LveGameObject::Map gameObjects;
-	std::shared_ptr<LveTexture> globalTexture;  // 全局采样器纹理
+
+	std::shared_ptr<LveTexture> defaultTexture_;
 };
 }  // namespace lve
