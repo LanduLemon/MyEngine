@@ -14,7 +14,10 @@ namespace lve {
 
 class SkyboxRenderSystem {
  public:
-  SkyboxRenderSystem(LveDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+  SkyboxRenderSystem(LveDevice& device, VkRenderPass renderPass,
+                     VkDescriptorSetLayout globalSetLayout,
+                     VkDescriptorSetLayout cubemapSetLayout,
+										 VkDescriptorSet skyboxSet);
   ~SkyboxRenderSystem();
 
   SkyboxRenderSystem(const SkyboxRenderSystem&) = delete;
@@ -23,13 +26,14 @@ class SkyboxRenderSystem {
   void renderSkybox(FrameInfo& frameInfo);
 
  private:
-  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout cubemapSetLayout);
   void createPipeline(VkRenderPass renderPass);
 
   LveDevice& lveDevice;
 
   std::unique_ptr<LvePipeline> lvePipeline;
   VkPipelineLayout pipelineLayout;
+	VkDescriptorSet skyboxSet_{VK_NULL_HANDLE}; // 新增
 };
 
 }  // namespace lve

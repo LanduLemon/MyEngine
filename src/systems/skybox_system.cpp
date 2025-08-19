@@ -19,9 +19,9 @@ struct SkyboxPushConstantData {
 };
 
 SkyboxRenderSystem::SkyboxRenderSystem(
-  LveDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
-  : lveDevice{ device } {
-  createPipelineLayout(globalSetLayout);
+  LveDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout cubemapSetLayout, VkDescriptorSet skyboxSet)
+  : lveDevice{ device }, skyboxSet_{skyboxSet} {
+  createPipelineLayout(globalSetLayout, cubemapSetLayout);
   createPipeline(renderPass);
 }
 
@@ -29,13 +29,13 @@ SkyboxRenderSystem::~SkyboxRenderSystem() {
   vkDestroyPipelineLayout(lveDevice.device(), pipelineLayout, nullptr);
 }
 
-void SkyboxRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+void SkyboxRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout cubemapSetLayout) {
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = sizeof(SkyboxPushConstantData);
 
-  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout };
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout, cubemapSetLayout };
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -73,37 +73,31 @@ void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass) {
 void SkyboxRenderSystem::renderSkybox(FrameInfo& frameInfo) {
 lvePipeline->bind(frameInfo.commandBuffer);
 
-  vkCmdBindDescriptorSets(
-      frameInfo.commandBuffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipelineLayout,
-      0,
-      1,
-      &frameInfo.globalDescriptorSet,
-      0,
-      nullptr);
+vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+                        &frameInfo.globalDescriptorSet, 0, nullptr);
 
-  // 渲染天空盒立方体
-  for (auto& kv : frameInfo.gameObjects) {
-    auto& obj = kv.second;
-    if (obj.model == nullptr) continue;
-    // 只渲染特定的天空盒对象
-    if (obj.GetTag() != "skybox") continue;
+vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1,
+                        &skyboxSet_, 0, nullptr);
 
-    SkyboxPushConstantData push{};
-    push.modelMatrix = obj.transform.mat4();
-    push.normalMatrix = obj.transform.normalMatrix();
+// 渲染天空盒立方体
+for (auto& kv : frameInfo.gameObjects) {
+  auto& obj = kv.second;
+  if (obj.model == nullptr) continue;
+  // 只渲染特定的天空盒对象
+  if (obj.GetTag() != "skybox") continue;
 
-    vkCmdPushConstants(
-        frameInfo.commandBuffer,
-        pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-        0,
-        sizeof(SkyboxPushConstantData),
-        &push);
-    obj.model->bind(frameInfo.commandBuffer);
-    obj.model->draw(frameInfo.commandBuffer);
-  }
+  SkyboxPushConstantData push{};
+  push.modelMatrix = obj.transform.mat4();
+  push.normalMatrix = obj.transform.normalMatrix();
+
+  vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                     0, sizeof(SkyboxPushConstantData), &push);
+  obj.model->bind(frameInfo.commandBuffer);
+  obj.model->draw(frameInfo.commandBuffer);
+}
 }
 
 }

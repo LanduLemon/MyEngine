@@ -73,14 +73,15 @@ namespace lve {
             vkDestroyImage(device_, image, nullptr);
             vkFreeMemory(device_, imageMemory, nullptr);
         }
-        VkImageView createImageView(VkImage image, VkFormat format);
-        void createImage(uint32_t width, uint32_t height, VkFormat format,
+        VkImageView createImageView(VkImage image, VkImageViewType viewType, VkFormat format);
+        void createImage(uint32_t width, uint32_t height, uint32_t arrayLayers, VkFormat format,
                          VkImageTiling tiling, VkImageUsageFlags usage,
                          VkMemoryPropertyFlags properties, VkImage& image,
-                         VkDeviceMemory& imageMemory);
+                         VkDeviceMemory& imageMemory, uint32_t flags = 0);
         void transitionImageLayout(VkImage image, VkFormat format,
                                    VkImageLayout oldLayout,
-                                   VkImageLayout newLayout);
+                                   VkImageLayout newLayout,
+                                   uint32_t layerCount = 1);
 
         VkPhysicalDeviceProperties properties;
 

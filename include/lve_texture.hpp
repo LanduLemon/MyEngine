@@ -6,6 +6,7 @@ namespace lve {
 class LveTexture {
 public:
     LveTexture(LveDevice& device, const std::string& filepath);
+		LveTexture(LveDevice& device, const std::array<std::string, 6>& faces); // cubemap
     ~LveTexture();
 
     VkImageView getImageView() const { return textureImageView; }
@@ -21,6 +22,7 @@ public:
 
 private:
     void createTextureImage(const std::string& filepath);
+		void createCubemapImage(const std::array<std::string, 6>& faces);
     void createTextureImageView();
     void createTextureSampler();
 
@@ -29,5 +31,7 @@ private:
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
+
+		bool isCubemap_{false};   // 新增
 };
 }

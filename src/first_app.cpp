@@ -65,15 +65,33 @@ namespace lve {
 				obj.material->buildDescriptor(*materialSetLayout, *materialPool);
 			}
 		}
+		//up -y, right x , forward z
+		VkDescriptorSet skyboxSet{VK_NULL_HANDLE};
+		{
+			// +X -X +Y -Y +Z -Z 的图片文件
+			std::array<std::string, 6> faces = {
+				"textures/skybox/Outer_space_x_pos.png",  // +X
+				"textures/skybox/Outer_space_x_neg.png",   // -X
+				"textures/skybox/bottom.png",    // +Y
+				"textures/skybox/top.png", // -Y
+				"textures/skybox/Outer_space_z_pos.png",  // +Z
+				"textures/skybox/Outer_space_z_neg.png"    // -Z
+			};
+			skyboxTexture_ = std::make_shared<LveTexture>(lveDevice, faces); // 保持生命周期
+			auto imgInfo = skyboxTexture_->descriptorInfo();
+			LveDescriptorWriter(*materialSetLayout, *materialPool)
+				.writeImage(0, &imgInfo)
+				.build(skyboxSet);
+		}
 
-  // 构建一个默认材质集
-  VkDescriptorSet defaultMaterialSet{VK_NULL_HANDLE};
-	auto defaultTex = std::make_shared<LveTexture>(lveDevice, "textures/white.png");
-	auto imgInfo = defaultTex->descriptorInfo();
-	LveDescriptorWriter(*materialSetLayout, *materialPool)
-		.writeImage(0, &imgInfo)
-		.build(defaultMaterialSet);
-	defaultTexture_ = defaultTex;
+		// 构建一个默认材质集
+		VkDescriptorSet defaultMaterialSet{VK_NULL_HANDLE};
+		auto defaultTex = std::make_shared<LveTexture>(lveDevice, "textures/white.png");
+		auto imgInfo = defaultTex->descriptorInfo();
+		LveDescriptorWriter(*materialSetLayout, *materialPool)
+			.writeImage(0, &imgInfo)
+			.build(defaultMaterialSet);
+		defaultTexture_ = defaultTex;
 
     std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
     for(int i = 0; i < globalDescriptorSets.size(); i++){
@@ -85,7 +103,10 @@ namespace lve {
 
     SkyboxRenderSystem skyboxRenderSystem{
         lveDevice, lveRenderer.getSwapChainRenderPass(),
-        globalSetLayout->getDescriptorSetLayout()};
+        globalSetLayout->getDescriptorSetLayout(),
+        materialSetLayout->getDescriptorSetLayout(),
+        skyboxSet
+    };
 
     SimpleRenderSystem simpleRenderSystem{
         lveDevice, lveRenderer.getSwapChainRenderPass(),
@@ -159,10 +180,10 @@ namespace lve {
   void FirstApp::loadGameObjects() {
 		auto texA = std::make_shared<LveTexture>(lveDevice, "textures/test.png");
 		auto texB = std::make_shared<LveTexture>(lveDevice, "textures/black.png");
-		auto mtlA = std::make_shared<LveMaterial>();
+		auto blackmtl = std::make_shared<LveMaterial>();
 		auto mtlB = std::make_shared<LveMaterial>();
 		mtlB->SetTexture(texA);
-		mtlA->SetTexture(texB);
+		blackmtl->SetTexture(texB);
 
     // std::vector<LveModel::Vertex> vertices{
     //     {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -189,7 +210,7 @@ namespace lve {
     lveModel = lveModel->createModelFromFile(lveDevice, "models/flat_vase.obj");
     auto flatVase = LveGameObject::CreateGameObject();
     flatVase.model = lveModel;
-		flatVase.material = mtlA;
+		flatVase.material = blackmtl;
     flatVase.transform.translation = {-.5f, .5f, 0};
     flatVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(flatVase.GetId(), std::move(flatVase));
@@ -198,6 +219,7 @@ namespace lve {
     auto smoothVase = LveGameObject::CreateGameObject();
     smoothVase.model = lveModel;
 		smoothVase.material = mtlB;
+		smoothVase.color ={0.5f,0,0};
     smoothVase.transform.translation = {.5f, .5f, 0};
     smoothVase.transform.scale = {3.f, 1.5f, 3.f};
     gameObjects.emplace(smoothVase.GetId(), std::move(smoothVase));

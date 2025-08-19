@@ -56,8 +56,7 @@ void main() {
   }
 	//outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
 	vec4 texColor = texture(texSampler, fragUV);
-  //vec3 base = fragColor * texColor.rgb;     // 顶点色与纹理色混合 (可按需调整)
-  vec3 base = texColor.rgb;
+  vec3 base = fragColor * texColor.rgb;     // 顶点色与纹理色混合 (可按需调整)
   vec3 lighting = diffuseLight * base + specularLight * base;
   outColor = vec4(lighting, texColor.a);
 }

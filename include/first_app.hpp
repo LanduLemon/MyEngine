@@ -37,5 +37,6 @@ class FirstApp {
   LveGameObject::Map gameObjects;
 
 	std::shared_ptr<LveTexture> defaultTexture_;
+	std::shared_ptr<LveTexture> skyboxTexture_;
 };
 }  // namespace lve
